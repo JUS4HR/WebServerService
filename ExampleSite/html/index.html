@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+
+<head>
+    <title>example page</title>
+</head>
+
+<body>
+    <button onclick="
+    $.ajax({
+        url:'/?request=getOsInfo',
+        type:'POST',
+        contentType: 'application/json',
+        data:JSON.stringify({
+            type:'linux'
+        }),
+        success:function(rawData){
+            if (rawData.status == 'ok') {
+                data = rawData.json;
+                $('#result').html(data['osInfo']);
+            }
+        }
+    });
+    ">Get OS Info</button>
+    <div id="result"></div>
+</body>
+
+</html>
+<link rel="stylesheet" type="text/css" href="{{url_for('static', filename='css/style.css')}}">
+<script src="https://code.jquery.com/jquery-3.6.3.min.js"></script>
