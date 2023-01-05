@@ -30,6 +30,7 @@ from os import listdir as _osListdir
 from os import path as _osPath
 from sys import path as _sysPath
 from typing import Any as _Any
+from typing import Callable as _Callable
 from typing import Dict as _Dict
 from typing import List as _List
 from typing import Optional as _Optional
@@ -40,9 +41,10 @@ from flask import jsonify as _jsonify
 from flask import render_template as _render_template
 from flask import request as _request
 
+from .__exampleCreate import createExample as _createExample
 from .__ssl import getSSLContext as _getSSLContext
 from .__types import *
-from .__exampleCreate import createExample as _createExample
+from .__fileWatch import ContentFileWatcher as _ContentFileWatcher
 
 _sysPath.append("..")
 
@@ -76,9 +78,11 @@ def _callBackPlaceHolder(json: CallableInputType) -> CallbackReturnType:
 class App():
 
     def __init__(self, name: _Optional[str] = None):
-
+        self.__name: str | None = name
         self.__redirectList: _List[str] = []
         self.__callbackList: _Dict[str, CallBackFunctionType] = {}
+        self.__reloadCallback: ReloadCallbackType = lambda: None
+        self.__fileWatcher: _ContentFileWatcher | None = None
         # create example config if name is "example"
         if name == "example":
             exampleConfigTemplate = _createExample()
@@ -89,18 +93,6 @@ class App():
             self.__config = _ConfigInstance(
                 "webApp" + "-" + name if name is not None else "unnamed",
                 _configTemplate)
-        self.__getPages()
-        self.__getPlugins()
-
-        self.__app = _flask(
-            name if name is not None else __name__,
-            template_folder=self.__config["htmlDirectory"],
-            static_folder=self.__config["staticFilesDirectory"])
-
-        @self.__app.route('/', methods=['GET', 'POST'])
-        def process():
-            return self.__process(_request.args,
-                                  _request.json if _request.is_json else None)
 
     def __process(self, args: _Dict[str, _Any],
                   json: _Dict[str, _Any] | None) -> _Any:
@@ -160,8 +152,34 @@ class App():
                     else:
                         print("No callbacks found in " + fileName)
 
+    def setReloadCallback(self, reloadCallback: ReloadCallbackType) -> None:
+        self.__reloadCallback = reloadCallback
+
     def run(self) -> None:
+        self.__redirectList = []
+        self.__callbackList = {}
         ssl_context: tuple[str, str] | None = None
+        self.__getPages()
+        self.__getPlugins()
+        watchDirs: list[str] = []
+        if self.__config["htmlDirectory"] != "":
+            watchDirs.append(_osPath.abspath(self.__config["htmlDirectory"]))
+        if self.__config["sslCertDirectory"] != "":
+            watchDirs.append(_osPath.abspath(self.__config["sslCertDirectory"]))
+        if self.__config["pluginDirectory"] != "":
+            watchDirs.append(_osPath.abspath(self.__config["pluginDirectory"]))
+        if self.__config["staticFilesDirectory"] != "":
+            watchDirs.append(_osPath.abspath(self.__config["staticFilesDirectory"]))
+        self.__fileWatcher = _ContentFileWatcher(self.__reloadCallback, watchDirs)
+        self.__app = _flask(
+            self.__name if self.__name is not None else __name__,
+            template_folder=self.__config["htmlDirectory"],
+            static_folder=self.__config["staticFilesDirectory"])
+
+        @self.__app.route('/', methods=['GET', 'POST'])
+        def process():
+            return self.__process(_request.args,
+                                  _request.json if _request.is_json else None)
         if self.__config["sslCertDirectory"] != "":
             try:
                 ssl_context = _getSSLContext(self.__config["sslCertDirectory"])
@@ -174,10 +192,12 @@ class App():
         try:
             if ssl_context:
                 print("SSL context is enabled: {}".format(ssl_context))
+            self.__fileWatcher.run()
             self.__app.run(host="0.0.0.0" if listenLan else None,
                            port=port,
                            debug=debug,
                            ssl_context=ssl_context)
 
-        except Exception as e:
-            print("Exception: {}".format(e))
+        except SystemExit:
+            self.__fileWatcher.stop()
+            raise SystemExit

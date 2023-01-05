@@ -9,3 +9,4 @@ CallbackReturnType = _Tuple[bool, str | None,
                             _Dict[str, _Any]]  # success?, reason, json
 
 CallBackFunctionType = _Callable[[CallableInputType], CallbackReturnType]
+ReloadCallbackType = _Callable[[], None]
