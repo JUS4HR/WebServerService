@@ -5,7 +5,7 @@ from sys import exit as sysExit
 from time import sleep as timeSleep
 
 from Config import Config, ConfigInstance, setConfigPath
-from Signal import setCallback, setupServer, killServer, signal
+from Signal import killServer, setCallback, setupServer, signal
 from Singleton import isFirstInstance
 from WebApp import App
 

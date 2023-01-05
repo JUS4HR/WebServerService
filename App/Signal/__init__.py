@@ -1,9 +1,14 @@
-from socket import socket as _socket, AF_INET as _AF_INET, SOCK_STREAM as _SOCK_STREAM, SOL_SOCKET as _SOL_SOCKET, SO_REUSEADDR as _SO_REUSEADDR
+from socket import AF_INET as _AF_INET
+from socket import SO_REUSEADDR as _SO_REUSEADDR
+from socket import SOCK_STREAM as _SOCK_STREAM
+from socket import SOL_SOCKET as _SOL_SOCKET
+from socket import socket as _socket
 from threading import Thread as _Thread
-from typing import Callable as _Callable, Dict as _Dict, Any as _Any
+from typing import Any as _Any
+from typing import Callable as _Callable
+from typing import Dict as _Dict
 
 _socketHandleListen: _socket = _socket(_AF_INET, _SOCK_STREAM)
-_socketHandleSend: _socket = _socket(_AF_INET, _SOCK_STREAM)
 _callback: _Callable[[str, str], None] | None = None
 _runningFlag: bool = True
 
@@ -34,11 +39,12 @@ def setupServer(name: str) -> None:
     _socketHandleListen.listen(1)
     _Thread(target=_listenThread).start()
 
+
 def killServer() -> None:
     global _runningFlag
     _runningFlag = False
-    _socketHandleSend.close()
     _socketHandleListen.close()
+
 
 def setCallback(callback: _Callable[[str, str], None]) -> None:
     global _callback
@@ -46,7 +52,7 @@ def setCallback(callback: _Callable[[str, str], None]) -> None:
 
 
 def signal(name: str, data0: str, data1: str) -> None:
-    # setup client socket
-    _socketHandleSend.connect(("", _generatePortWithName(name)))
-    # send data
-    _socketHandleSend.send((data0 + " " + data1).encode())
+    socketHandleSend: _socket = _socket(_AF_INET, _SOCK_STREAM)
+    socketHandleSend.connect(("", _generatePortWithName(name)))
+    socketHandleSend.send((data0 + " " + data1).encode())
+    socketHandleSend.close()
