@@ -118,13 +118,16 @@ class App():
 
     def __callback(self, keyWord: str, json: _Dict[str, _Any] | None) -> _Any:
         if keyWord in self.__callbackList:
-            success, reason, resultJson = self.__callbackList[keyWord](
-                json if json is not None else {})
-            return _jsonify({
-                "status": "ok" if success else "error",
-                "error-reason": reason,
-                "json": resultJson
-            })
+            try:
+                success, reason, resultJson = self.__callbackList[keyWord](
+                    json if json is not None else {})
+                return _jsonify({
+                    "status": "ok" if success else "error",
+                    "error-reason": reason,
+                    "json": resultJson
+                })
+            except Exception as e:
+                print("Skipping plugin callback [" + keyWord + "]:", e)
         else:
             return _jsonify({
                 "status": "error",
@@ -137,20 +140,23 @@ class App():
             if not fileName.endswith(".py") or not _osPath.isfile(
                     _osPath.join(self.__config["pluginDirectory"], fileName)):
                 pass
-            moduleSpec = _importUtil.spec_from_file_location(
-                fileName[:-3],
-                _osPath.join(self.__config["pluginDirectory"], fileName))
-            if moduleSpec is not None:
-                module = _importUtil.module_from_spec(moduleSpec)
-                if moduleSpec.loader is not None:
-                    moduleSpec.loader.exec_module(module)
-                    if hasattr(module, "callbacks"):
-                        for key, callable in module.callbacks.items():
-                            if key in self.__callbackList:
-                                raise Exception("Callback key conflict: " + key)
-                            self.__callbackList[key] = callable
-                    else:
-                        print("No callbacks found in " + fileName)
+            try:
+                moduleSpec = _importUtil.spec_from_file_location(
+                    fileName[:-3],
+                    _osPath.join(self.__config["pluginDirectory"], fileName))
+                if moduleSpec is not None:
+                    module = _importUtil.module_from_spec(moduleSpec)
+                    if moduleSpec.loader is not None:
+                        moduleSpec.loader.exec_module(module)
+                        if hasattr(module, "callbacks"):
+                            for key, callable in module.callbacks.items():
+                                if key in self.__callbackList:
+                                    raise Exception("Callback key conflict: " + key)
+                                self.__callbackList[key] = callable
+                        else:
+                            print("No callbacks found in " + fileName)
+            except Exception as e:
+                print("Skipping plugin [" + fileName + "]:", e)
 
     def setReloadCallback(self, reloadCallback: ReloadCallbackType) -> None:
         self.__reloadCallback = reloadCallback
