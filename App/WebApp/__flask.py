@@ -168,8 +168,8 @@ class App():
             watchDirs.append(_osPath.abspath(self.__config["sslCertDirectory"]))
         if self.__config["pluginDirectory"] != "":
             watchDirs.append(_osPath.abspath(self.__config["pluginDirectory"]))
-        if self.__config["staticFilesDirectory"] != "":
-            watchDirs.append(_osPath.abspath(self.__config["staticFilesDirectory"]))
+        # if self.__config["staticFilesDirectory"] != "": # static files are not watched
+        #     watchDirs.append(_osPath.abspath(self.__config["staticFilesDirectory"]))
         self.__fileWatcher = _ContentFileWatcher(self.__reloadCallback, watchDirs)
         self.__app = _flask(
             self.__name if self.__name is not None else __name__,
