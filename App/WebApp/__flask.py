@@ -78,16 +78,16 @@ def _callBackPlaceHolder(json: CallableInputType) -> CallbackReturnType:
 class App():
 
     def __init__(self, name: str | None = None):
-        self.__name: str | None = name
+        self.__name: str = name if name is not None else "unnamed"
         self.__redirectList: list[str] = []
         self.__callbackList: dict[str, CallBackFunctionType] = {}
         self.__reloadCallback: ReloadCallbackType = lambda: None
         self.__fileWatcher: _ContentFileWatcher | None = None
         self.__modules: list[_ModuleType] = []
+        self.__configName = CONFIG_NAME_PREFIX + CONFIG_NAME_CONBINER + self.__name
         # create example config if name is "example"
         if name == "example":
             exampleConfigTemplate = _createExample()
-            self.__configName = CONFIG_NAME_PREFIX + CONFIG_NAME_CONBINER + name if name is not None else "unnamed"
             self.__config = _ConfigInstance(self.__configName,
                                             exampleConfigTemplate)
         else:
@@ -161,8 +161,9 @@ class App():
                                 "plugin" + CONFIG_NAME_CONBINER +
                                 fileName[:-3], module.config)
                     self.__modules.append(module)  # to keep the module alive
+                    print(self.__name + ": Loaded plugin " + fileName + ".")
             except Exception as e:
-                print("Skipping plugin [" + fileName + "]:", e)
+                print(self.__name + ": Skipping plugin [" + fileName + "]:", e)
 
     def setReloadCallback(self, reloadCallback: ReloadCallbackType) -> None:
         self.__reloadCallback = reloadCallback

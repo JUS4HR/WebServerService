@@ -3,7 +3,7 @@ from typing import Any as _Any, Dict as _Dict
 
 def createExample() -> _Dict[str, _Any]:
     return {
-        "aImportantNote": ("This is an example config file. Please change the values to your own. And dont use relative path like this one.", ""),
+        "anImportantNote": ("This is an example config file. Please change the values to your own. And dont use relative path like this one.", ""),
         "port": (20200, "The port to listen on."),
         "portWithSSL": (20201, "The port to listen on with SSL."),
         "listenLan": (True, "Whether to listen on lan or not."),
