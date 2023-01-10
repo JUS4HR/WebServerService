@@ -3,18 +3,16 @@ from json import load as _jsonLoad
 from os import makedirs as _osMakedirs
 from os import path as _osPath
 from typing import Any as _Any
-from typing import Dict as _Dict
-from typing import List as _List
-from typing import Tuple as _Tuple
 
 _configSymbol = "-"
 _configDescriptionPostfix: str = _configSymbol + "description"
-_configNameList: _List[str] = []
+_configNameList: list[str] = []
 
 _configFileName = "config.json"
 _configPath: str | None = None
 
-Config = _Dict[str, _Tuple[_Any, str]]
+Config = dict[str, tuple[_Any, str]]
+
 
 def setConfigPath(configPath: str) -> None:
     global _configPath
@@ -60,14 +58,12 @@ class ConfigInstance:
     """The class for the config instance, use this to get the config.
     """
 
-    def __init__(self,
-                 name: str,
-                 contentList: Config = {}):
+    def __init__(self, name: str, contentList: Config = {}):
         """Constructing a config instance.
 
         Args:
             name (str): The name of the config instance, will be the entry in the config file.
-            contentList (_Dict[str, _Tuple[_Any, str]], optional): The name, default value and description of the config items. Defaults to {}.
+            contentList (dict[str, tuple[Any, str]], optional): The name, default value and description of the config items. Defaults to {}.
 
         Raises:
             ValueError: If the name is empty.
@@ -82,7 +78,7 @@ class ConfigInstance:
                 format(name))
         self.__name = name
         _configNameList.append(name)
-        self.__content: _Dict[str, _Any] = {}
+        self.__content: dict[str, _Any] = {}
         contentList = dict(sorted(contentList.items()))
         for item, content in contentList.items():
             formattedName = _formatConfigItemName(item)
@@ -94,19 +90,21 @@ class ConfigInstance:
             self.__content[formattedName] = content[0]
             if content[1] != "":
                 self.__content[formattedName +
-                            _configDescriptionPostfix] = content[1]
+                               _configDescriptionPostfix] = content[1]
         self.__readConfig()
 
     def __readConfig(self):
-        oldConf: _Dict[str, _Dict[str, _Any]] = {}
+        oldConf: dict[str, dict[str, _Any]] = {}
         with open(_getConfigFileFullPath(), "r") as configFile:
-            try: # in case the config is corrupted
+            try:  # in case the config is corrupted
                 oldConf = _jsonLoad(configFile)
             except Exception:
-                with open(_getConfigFileFullPath() + ".corrupted", "w") as corruptedConfigFile:
+                with open(_getConfigFileFullPath() + ".corrupted",
+                          "w") as corruptedConfigFile:
                     corruptedConfigFile.write(configFile.read())
                 # print in red
-                print("\033[91mConfig file corrupted, backup created at " + _getConfigFileFullPath() + ".corrupted\033[0m")
+                print("\033[91mConfig file corrupted, backup created at " +
+                      _getConfigFileFullPath() + ".corrupted\033[0m")
                 pass
         if self.__name in oldConf:
             for item in self.__content:

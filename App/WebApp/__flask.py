@@ -29,12 +29,9 @@ from importlib import util as _importUtil
 from os import listdir as _osListdir
 from os import path as _osPath
 from sys import path as _sysPath
+from types import ModuleType as _ModuleType
 from typing import Any as _Any
 from typing import Callable as _Callable
-from typing import Dict as _Dict
-from typing import List as _List
-from typing import Optional as _Optional
-from typing import Tuple as _Tuple
 
 from flask import Flask as _flask
 from flask import jsonify as _jsonify
@@ -42,14 +39,17 @@ from flask import render_template as _render_template
 from flask import request as _request
 
 from .__exampleCreate import createExample as _createExample
+from .__fileWatch import ContentFileWatcher as _ContentFileWatcher
 from .__ssl import getSSLContext as _getSSLContext
 from .__types import *
-from .__fileWatch import ContentFileWatcher as _ContentFileWatcher
 
 _sysPath.append("..")
 
 from Config import Config as _Config
 from Config import ConfigInstance as _ConfigInstance
+
+CONFIG_NAME_PREFIX = "webApp"
+CONFIG_NAME_CONBINER = "-"
 
 _configTemplate: _Config = {
     "port": (80, "The port to listen on."),
@@ -77,25 +77,24 @@ def _callBackPlaceHolder(json: CallableInputType) -> CallbackReturnType:
 
 class App():
 
-    def __init__(self, name: _Optional[str] = None):
+    def __init__(self, name: str | None = None):
         self.__name: str | None = name
-        self.__redirectList: _List[str] = []
-        self.__callbackList: _Dict[str, CallBackFunctionType] = {}
+        self.__redirectList: list[str] = []
+        self.__callbackList: dict[str, CallBackFunctionType] = {}
         self.__reloadCallback: ReloadCallbackType = lambda: None
         self.__fileWatcher: _ContentFileWatcher | None = None
+        self.__modules: list[_ModuleType] = []
         # create example config if name is "example"
         if name == "example":
             exampleConfigTemplate = _createExample()
-            self.__config = _ConfigInstance(
-                "webApp" + "-" + name if name is not None else "unnamed",
-                exampleConfigTemplate)
+            self.__configName = CONFIG_NAME_PREFIX + CONFIG_NAME_CONBINER + name if name is not None else "unnamed"
+            self.__config = _ConfigInstance(self.__configName,
+                                            exampleConfigTemplate)
         else:
-            self.__config = _ConfigInstance(
-                "webApp" + "-" + name if name is not None else "unnamed",
-                _configTemplate)
+            self.__config = _ConfigInstance(self.__configName, _configTemplate)
 
-    def __process(self, args: _Dict[str, _Any],
-                  json: _Dict[str, _Any] | None) -> _Any:
+    def __process(self, args: dict[str, _Any],
+                  json: dict[str, _Any] | None) -> _Any:
         if "redirect" in args:
             if args["redirect"] in self.__redirectList:
                 return _render_template(args["redirect"] + ".html")
@@ -116,7 +115,7 @@ class App():
                     if file.endswith(".html"):
                         self.__redirectList.append(file[:-5])
 
-    def __callback(self, keyWord: str, json: _Dict[str, _Any] | None) -> _Any:
+    def __callback(self, keyWord: str, json: dict[str, _Any] | None) -> _Any:
         if keyWord in self.__callbackList:
             try:
                 success, reason, resultJson = self.__callbackList[keyWord](
@@ -151,10 +150,17 @@ class App():
                         if hasattr(module, "callbacks"):
                             for key, callable in module.callbacks.items():
                                 if key in self.__callbackList:
-                                    raise Exception("Callback key conflict: " + key)
+                                    raise Exception("Callback key conflict: " +
+                                                    key)
                                 self.__callbackList[key] = callable
                         else:
                             print("No callbacks found in " + fileName)
+                        if hasattr(module, "config"):
+                            module.config = _ConfigInstance(
+                                self.__configName + CONFIG_NAME_CONBINER +
+                                "plugin" + CONFIG_NAME_CONBINER +
+                                fileName[:-3], module.config)
+                    self.__modules.append(module)  # to keep the module alive
             except Exception as e:
                 print("Skipping plugin [" + fileName + "]:", e)
 
@@ -171,12 +177,14 @@ class App():
         if self.__config["htmlDirectory"] != "":
             watchDirs.append(_osPath.abspath(self.__config["htmlDirectory"]))
         if self.__config["sslCertDirectory"] != "":
-            watchDirs.append(_osPath.abspath(self.__config["sslCertDirectory"]))
+            watchDirs.append(_osPath.abspath(
+                self.__config["sslCertDirectory"]))
         if self.__config["pluginDirectory"] != "":
             watchDirs.append(_osPath.abspath(self.__config["pluginDirectory"]))
         # if self.__config["staticFilesDirectory"] != "": # static files are not watched
         #     watchDirs.append(_osPath.abspath(self.__config["staticFilesDirectory"]))
-        self.__fileWatcher = _ContentFileWatcher(self.__reloadCallback, watchDirs)
+        self.__fileWatcher = _ContentFileWatcher(self.__reloadCallback,
+                                                 watchDirs)
         self.__app = _flask(
             self.__name if self.__name is not None else __name__,
             template_folder=self.__config["htmlDirectory"],
@@ -186,6 +194,7 @@ class App():
         def process():
             return self.__process(_request.args,
                                   _request.json if _request.is_json else None)
+
         if self.__config["sslCertDirectory"] != "":
             try:
                 ssl_context = _getSSLContext(self.__config["sslCertDirectory"])

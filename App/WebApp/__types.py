@@ -1,12 +1,16 @@
 from typing import Any as _Any
 from typing import Callable as _Callable
-from typing import Dict as _Dict
-from typing import List as _List
-from typing import Tuple as _Tuple
 
-CallableInputType = _Dict[str, _Any]  # json
-CallbackReturnType = _Tuple[bool, str | None,
-                            _Dict[str, _Any]]  # success?, reason, json
+CallableInputType = dict[str, _Any]  # json
+CallbackReturnType = tuple[bool, str | None,
+                           dict[str, _Any]]  # success?, reason, json
 
 CallBackFunctionType = _Callable[[CallableInputType], CallbackReturnType]
 ReloadCallbackType = _Callable[[], None]
+
+
+class Plugin:
+
+    def __init__(self) -> None:
+        self.callbacksList: dict[str, CallBackFunctionType] = {}
+        self.config: dict[str, _Any] = {}
