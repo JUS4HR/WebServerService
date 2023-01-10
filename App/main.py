@@ -35,6 +35,10 @@ parser.add_argument("-q",
                     "--quit",
                     action="store_true",
                     help="Quit main process")
+parser.add_argument("-t",
+                    "--test",
+                    action="store_true",
+                    help="Test apps' plugins. Quit after loading.")
 args = parser.parse_args()
 
 rootName = args.root_name
@@ -65,6 +69,7 @@ def signalCallback(signal: str, param: str):
 
 
 def server():
+    global runningFlag
     # check arguments
     if args.reload is not None:
         raise ValueError("Cannot reload when main process is not running.")
@@ -82,7 +87,9 @@ def server():
         appList[name].setReloadCallback(thisReloadCallback)
         threadList[name] = Process(target=appList[name].run)
         threadList[name].start()
-        print("Web app: " + name + " initialized.")
+    if args.test:
+        runningFlag = False
+        print("Test mode. Quitting after loading.")
     try:
         while runningFlag:
             timeSleep(1)
