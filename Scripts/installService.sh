@@ -73,6 +73,7 @@ elif [ -n "$selectedVenv" ]; then
 else
     launchCommand="python $mainPyPath"
 fi
+launchCommand="cd $(dirname "$scriptDir"); $launchCommand" 
 launchCommand="bash -c '$launchCommand'"
 
 cd "$scriptDir" || exit 1
