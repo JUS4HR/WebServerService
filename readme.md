@@ -4,7 +4,6 @@ Usage
 ---
 ```
 pip install -r requirements.txt
-pyinstaller app.spec
-./Scripts/install-service.sh
-systemctl start webServer
+./Scripts/installService.sh
+systemctl start webServer # or systemctl --user start webServer
 ```
