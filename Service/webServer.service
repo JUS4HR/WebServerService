@@ -2,7 +2,7 @@
 Description="Web Service"
 
 [Service]
-ExecStart=<executable>
+ExecStart={{launchCommand}}
 
 [Install]
 WantedBy=multi-user.target
