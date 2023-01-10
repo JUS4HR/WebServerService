@@ -115,12 +115,9 @@ class App():
             return _render_template("404.html")
 
     def __getPages(self) -> None:
-        for pageDir in _osListdir(self.__config["htmlDirectory"]):
-            if _osPath.isdir(pageDir):
-                fileNames = _osListdir(pageDir)
-                for file in fileNames:
-                    if file.endswith(".html"):
-                        self.__redirectList.append(file[:-5])
+        for fileName in _osListdir(self.__config["htmlDirectory"]):
+            if fileName.endswith(".html"):
+                self.__redirectList.append(fileName[:-5])
 
     def __callback(self, keyWord: str, json: dict[str, _Any] | None) -> _Any:
         if keyWord in self.__callbackList:
