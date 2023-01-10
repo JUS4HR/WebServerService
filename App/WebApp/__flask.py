@@ -67,7 +67,14 @@ _configTemplate: _Config = {
     "debug": (False, "Whether to enable debug mode or not."),
     "pluginDirectory":
     ("",
-     "The directory where plugins (.py files) are located. Use absolute path.")
+     "The directory where plugins (.py files) are located. Use absolute path."
+     ),
+    "watchPluginChange": (False, "Whether to watch plugin changes or not."),
+    "watchHtmlChange": (True, "Whether to watch html changes or not."),
+    "watchStaticFilesChange":
+    (False, "Whether to watch static files changes or not."),
+    "watchSslCertChange": (False,
+                           "Whether to watch ssl certificate changes or not."),
 }
 
 
@@ -175,15 +182,20 @@ class App():
         self.__getPages()
         self.__getPlugins()
         watchDirs: list[str] = []
-        if self.__config["htmlDirectory"] != "":
+        if self.__config["htmlDirectory"] != "" and self.__config[
+                "watchHtmlChange"]:
             watchDirs.append(_osPath.abspath(self.__config["htmlDirectory"]))
-        if self.__config["sslCertDirectory"] != "":
+        if self.__config["sslCertDirectory"] != "" and self.__config[
+                "watchSslCertChange"]:
             watchDirs.append(_osPath.abspath(
                 self.__config["sslCertDirectory"]))
-        if self.__config["pluginDirectory"] != "":
+        if self.__config["pluginDirectory"] != "" and self.__config[
+                "watchPluginChange"]:
             watchDirs.append(_osPath.abspath(self.__config["pluginDirectory"]))
-        # if self.__config["staticFilesDirectory"] != "": # static files are not watched
-        #     watchDirs.append(_osPath.abspath(self.__config["staticFilesDirectory"]))
+        if self.__config["staticFilesDirectory"] != "" and self.__config[
+                "watchStaticFilesChange"]:
+            watchDirs.append(
+                _osPath.abspath(self.__config["staticFilesDirectory"]))
         self.__fileWatcher = _ContentFileWatcher(self.__reloadCallback,
                                                  watchDirs)
         self.__app = _flask(
