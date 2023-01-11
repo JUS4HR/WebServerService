@@ -131,6 +131,11 @@ class App():
                 })
             except Exception as e:
                 print("Skipping plugin callback [" + keyWord + "]:", e)
+                return _jsonify({
+                "status": "error",
+                "error-reason": "Internal error: " + str(e),
+                "json": {}
+            })
         else:
             return _jsonify({
                 "status": "error",
