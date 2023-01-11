@@ -94,6 +94,7 @@ Usage
     ```
 
  5. Other usage
+
     `--reload [app name]` When an instance is already running, run another instance with this parameter to reload the app. __Note__ the `main` part in the config is not reloaded.
 
     `--quit` When an instance is already running, run another instance with this parameter to quit the existing instance.
@@ -121,16 +122,11 @@ Tutorial
     $.ajax({
         url: "/?request=[plugin target name]",
         type: "POST",
-        data: JSON.stringify({
-            "plugin": "pluginName",
-            "function": "functionName",
-            "args": {
-                "arg1": "arg1Value",
-                "arg2": "arg2Value"
-            }
-        }),
         contentType: "application/json",
-        dataType: "json",
+        data: JSON.stringify({
+            "name1": "val1",
+            "name2": "val2",
+        }),
         success: function (data) {
             console.log(data);
         }
@@ -138,17 +134,20 @@ Tutorial
     ```
     The it comes to the plugins. Plugins are python files located at `plugin-directory` in the config. The file should contain the following variables:
     ```
+    # the config setup for the plugin
     config: dict[str, tuple[any, str]] = {
         "yourConfigItem1": (yourConfigItem1DefaultValue, "yourConfigItem1Description"),
         "yourConfigItem2": (yourConfigItem2DefaultValue, "yourConfigItem2Description"),
         ...
     }
 
+    # its functions
     def yourFunction1(jsonInput: dict[str, any]) -> str:
         return True, None, {[json to send back]}
         # returns are <success: bool, error: str, json: dict[str, any]>
     
-    callbackList: dict[str, Callable[[dict[str, any]], tuple[bool, str, dict[str, any]]]] = {
+    # the list for the server to read the functions
+    callbacks: dict[str, Callable[[dict[str, any]], tuple[bool, str, dict[str, any]]]] = {
         "yourFunction1": yourFunction1,
         # the str should be your request target name, same as the one in the ajax request above.
         ...
