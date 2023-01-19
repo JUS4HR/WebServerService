@@ -17,6 +17,6 @@ def getSSLContext(path:str) -> tuple[str, str]:
             fileKey = file
             break
     if filePem and fileKey:
-        return filePem, fileKey
+        return _osPath.join(path, filePem), _osPath.join(path, fileKey)
     else:
         raise FileNotFoundError("No pem or key file found.")

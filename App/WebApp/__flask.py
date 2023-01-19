@@ -240,3 +240,5 @@ class App():
         except SystemExit:
             self.__fileWatcher.stop()
             raise SystemExit
+        except Exception as e:
+            Log.error("App [" + self.__name + "] failed to initialize:", e)
