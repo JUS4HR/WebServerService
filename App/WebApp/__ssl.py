@@ -9,12 +9,12 @@ def getSSLContext(path:str) -> tuple[str, str]:
     filePem: str | None = None
     fileKey: str | None = None
     for file in files:
-        if file.endswith(".pem"):
+        if file.lower().endswith(".pem"):
             filePem = file
             break
     for file in files:
-        if file.endswith(".key"):
-            filePem = file
+        if file.lower().endswith(".key"):
+            fileKey = file
             break
     if filePem and fileKey:
         return filePem, fileKey
