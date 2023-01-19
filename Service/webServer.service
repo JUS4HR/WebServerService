@@ -3,6 +3,10 @@ Description="Web Service"
 
 [Service]
 ExecStart={{launchCommand}}
+ExecStop={{stopCommand}}
+ExecReload={{stopCommand}}; {{launchCommand}}
+TimeoutStopSec=5
+RestartSec=5
 
 [Install]
 WantedBy=multi-user.target
