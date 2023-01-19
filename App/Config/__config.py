@@ -3,6 +3,11 @@ from json import load as _jsonLoad
 from os import makedirs as _osMakedirs
 from os import path as _osPath
 from typing import Any as _Any
+from sys import path as _sysPath
+
+_sysPath.append("..")
+
+import Log
 
 _configSymbol = "-"
 _configDescriptionPostfix: str = _configSymbol + "description"
@@ -102,9 +107,8 @@ class ConfigInstance:
                 with open(_getConfigFileFullPath() + ".corrupted",
                           "w") as corruptedConfigFile:
                     corruptedConfigFile.write(configFile.read())
-                # print in red
-                print("\033[91mConfig file corrupted, backup created at " +
-                      _getConfigFileFullPath() + ".corrupted\033[0m")
+                Log.error("Config file corrupted, backup created at {}.".
+                          format(_getConfigFileFullPath() + ".corrupted"))
                 pass
         if self.__name in oldConf:
             for item in self.__content:

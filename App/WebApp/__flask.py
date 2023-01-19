@@ -45,6 +45,7 @@ from .__types import *
 
 _sysPath.append("..")
 
+import Log
 from Config import Config as _Config
 from Config import ConfigInstance as _ConfigInstance
 
@@ -130,12 +131,13 @@ class App():
                     "json": resultJson
                 })
             except Exception as e:
-                print("Skipping plugin callback [" + keyWord + "]:", e)
+                Log.error("App[" + self.__name + "]",
+                          "Skipping plugin callback [" + keyWord + "]:", e)
                 return _jsonify({
-                "status": "error",
-                "error-reason": "Internal error: " + str(e),
-                "json": {}
-            })
+                    "status": "error",
+                    "error-reason": "Internal error: " + str(e),
+                    "json": {}
+                })
         else:
             return _jsonify({
                 "status": "error",
@@ -162,17 +164,24 @@ class App():
                                     raise Exception("Callback key conflict: " +
                                                     key)
                                 self.__callbackList[key] = callable
+                                Log.info(
+                                    "App[" + self.__name + "]",
+                                    "Loaded callback " + key + " from " +
+                                    fileName)
                         else:
-                            print("No callbacks found in " + fileName)
+                            Log.warning("App[" + self.__name + "]",
+                                        "No callbacks found in " + fileName)
                         if hasattr(module, "config"):
                             module.config = _ConfigInstance(
                                 self.__configName + CONFIG_NAME_CONBINER +
                                 "plugin" + CONFIG_NAME_CONBINER +
                                 fileName[:-3], module.config)
                     self.__modules.append(module)  # to keep the module alive
-                    print(self.__name + ": Loaded plugin " + fileName + ".")
+                    Log.info("App[" + self.__name + "]",
+                             "Loaded plugin " + fileName + ".")
             except Exception as e:
-                print(self.__name + ": Skipping plugin [" + fileName + "]:", e)
+                Log.error("App[" + self.__name + "]",
+                          "Skipping plugin [" + fileName + "]:", e)
 
     def setReloadCallback(self, reloadCallback: ReloadCallbackType) -> None:
         self.__reloadCallback = reloadCallback
@@ -214,14 +223,14 @@ class App():
             try:
                 ssl_context = _getSSLContext(self.__config["sslCertDirectory"])
             except Exception as e:
-                print(e)
+                Log.error("Failed to load SSL context:", e)
         port: int = self.__config[
             "port"] if ssl_context is None else self.__config["portWithSSL"]
         listenLan: bool = self.__config["listenLan"]
         debug: bool = self.__config["debug"]
         try:
             if ssl_context:
-                print("SSL context is enabled: {}".format(ssl_context))
+                Log.info("SSL context is enabled: {}".format(ssl_context))
             self.__fileWatcher.run()
             self.__app.run(host="0.0.0.0" if listenLan else None,
                            port=port,

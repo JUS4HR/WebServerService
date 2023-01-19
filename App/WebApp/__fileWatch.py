@@ -3,10 +3,15 @@ Content file watcher for a web app.
 Watches for changes in the content directory and calls the reload callback.
 """
 
+from sys import path as _sysPath
 from typing import Callable as _Callable
 
 from watchdog.events import FileSystemEventHandler as _FileSystemEventHandler
 from watchdog.observers import Observer as _Observer
+
+_sysPath.append("..")
+
+import Log
 
 
 class ContentFileWatcher:
@@ -35,7 +40,7 @@ class ContentFileWatcher:
         if event.is_directory:
             return
         try:
-            print("Reloading due to", event.event_type, "in", event.src_path)
+            Log.info("Reloading due to", event.event_type, "in", event.src_path)
             self.__reloadCallback()
         except Exception as e:  # in case of error, print it and continue
-            print("Exception caught:", e)
+            Log.error("Exception caught:", e)
