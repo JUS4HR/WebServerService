@@ -7,6 +7,8 @@ serviceFileTemp="../Service/temp.service"
 serviceFileDestSystem="/etc/systemd/system/webServer.service"
 serviceFileDestUser="$HOME/.config/systemd/user/webServer.service"
 
+stopCommandSuffix=" -q"
+
 function _askWhether(){
     while true; do
         read -p "$1 ([Y]/n) " yn
@@ -75,6 +77,7 @@ else
 fi
 launchCommand="cd $(dirname "$scriptDir"); $launchCommand" 
 launchCommand="bash -c '$launchCommand'"
+stopCommand="bash -c '$launchCommand$stopCommandSuffix'"
 
 cd "$scriptDir" || exit 1
 
@@ -85,6 +88,8 @@ substitutionSuffix="}}"
 cp "$serviceFile" "$serviceFileTemp"
 stringToReplace=$substitutionPrefix"launchCommand"$substitutionSuffix
 sed -i "s!$stringToReplace!$launchCommand!g" "$serviceFileTemp"
+stringToReplace=$substitutionPrefix"stopCommand"$substitutionSuffix
+sed -i "s!$stringToReplace!$stopCommand!g" "$serviceFileTemp"
 
 if _askWhether "Install Service for user? (For conda environment only works for user)"; then
     installForUser="true"
