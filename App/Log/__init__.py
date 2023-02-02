@@ -7,7 +7,7 @@ from logging import DEBUG as _DEBUG
 from logging import ERROR as _ERROR
 from logging import INFO as _INFO
 from logging import WARNING as _WARNING
-from logging import FileHandler as _FileHandler
+from logging.handlers import RotatingFileHandler as _FileHandler
 from logging import Logger as _Logger
 from logging import StreamHandler as _StreamHandler
 from logging import basicConfig as _basicConfig
@@ -49,7 +49,7 @@ def init() -> None:
     streamHandler = _StreamHandler()
     streamHandler.setLevel(_getLogLevel(_configInstance["logLevel"]))
     fileHandler = _FileHandler(
-        _osPath.join(logPath, _configInstance["name"] + ".log"))
+        _osPath.join(logPath, _configInstance["name"] + ".log"), maxBytes=1024 * 1024 * 10)
     fileHandler.setLevel(_getLogLevel(_configInstance["logFileLevel"]))
     _basicConfig(
         level=_getLogLevel(_configInstance["logLevel"]),
